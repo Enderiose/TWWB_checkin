@@ -66,7 +66,7 @@ MIT License（摘要）
 | 作者 / Author | GitOfUser |
 | 收录提交 / Vendored commit | `cb9f5e21a1fc447a59d16c1184dc671727058656`（`fix(scripts/checkin_py): adjust checkin mouse coordinates`） |
 | 许可证 / License | 上游未提供许可证文件，版权归原作者所有（All rights reserved） |
-| 本地是否修改 / Local modifications | 无（原样收录；仅生成运行时缓存 `scripts/__pycache__/`） |
+| 本地是否修改 / Local modifications | **有本地补丁 / Local patches applied**（2026-09-22）：① 点击坐标支持环境变量覆盖 `WORKBUDDY_MENU_X/Y`、`WORKBUDDY_CHECKIN_X/Y`，未设置时保持上游原值 207/983 与 112/487；② 新增流程开关 `WORKBUDDY_SKIP_MENU`，可在首页直接签到、跳过头像菜单（默认 `0` = 上游原始流程）；③ 新增点击校验 `WORKBUDDY_VERIFY`：等按钮渲染、确认窗口在前台、点击后对比截图、无变化则重试，找不到按钮则按"已签到"处理（默认 `1`；设 `0` 退回上游盲点行为）；④ 启动时打印坐标/流程/校验状态与窗口矩形；⑤ 主流程包裹 `try/except`，异常时弹窗提示。上游的启动、查找窗口、关闭窗口与点击序列均保留。另生成运行时缓存 `scripts/__pycache__/`。 |
 
 ### 用途 / Purpose
 
@@ -78,6 +78,20 @@ WorkBuddy 每日签到自动化。通过 Windows Win32 API（Python `ctypes` / P
 
 ### 使用注意 / Usage notes
 
+本地补丁快照 / Patch snapshot：`patches/workbuddy-checkin-local.patch`。
+`workbuddy-checkin/` 是独立子模块，其 `origin` 指向上游仓库，本地补丁不适合提交到上游，
+因此以补丁文件形式随主仓库一起版本化，便于重放与回溯：
+
+```cmd
+cd workbuddy-checkin
+git checkout cb9f5e2
+git apply ../patches/workbuddy-checkin-local.patch
+```
+
+本仓库对 `checkin_py.py` 的本地补丁涉及：坐标读取方式（环境变量覆盖，默认值不变）、
+流程开关（默认保持上游的"点头像→等菜单→点签到"步骤）与点击校验（默认开启，
+可用 `WORKBUDDY_VERIFY=0` 完全退回上游的"盲点"行为）；上游的窗口查找/启动/关闭与
+点击时序均未改动。如需与上游对比，可在 `workbuddy-checkin/` 目录执行 `git diff`。
 上游仓库未声明开源许可证，因此在未获得作者授权前：
 
 - 请勿再分发、商用或以其名义发布衍生版本；

@@ -1,64 +1,77 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 Test Script - Validate application and script paths
+
+All paths come from config.py, so this test can never drift away from what
+scripts/auto_checkin.py actually uses.
 """
 
 import os
+import sys
 
-# Application path configuration
-TRAE_EXE = r"C:\Users\Administrator\AppData\Local\Programs\TRAE SOLO CN\TRAE SOLO CN.exe"
-WORKBUDDY_EXE = r"C:\Users\Administrator\AppData\Local\Programs\WorkBuddy\WorkBuddy.exe"
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-# Trae check-in script path
-TRAE_CHECKIN_SCRIPT = r"D:\agents_project\auto_sign\trae-daily-checkin\src\auto-checkin.mjs"
+try:
+    from config import (
+        PROJECT_DIR, TRAE_EXE, WORKBUDDY_EXE,
+        TRAE_CHECKIN_SCRIPT, WORKBUDDY_CHECKIN_SCRIPT,
+        PYTHON_EXE, NODE_EXE, LOG_DIR,
+    )
+except Exception as exc:                                       # noqa: BLE001
+    print("[ERROR] Could not import config.py: %s: %s" % (type(exc).__name__, exc))
+    sys.exit(1)
 
-# WorkBuddy check-in script path
-WORKBUDDY_CHECKIN_SCRIPT = r"D:\agents_project\auto_sign\workbuddy-checkin\scripts\checkin_py.py"
 
 def test_path(path, name):
     """Test if path exists"""
-    if os.path.exists(path):
-        print(f"[OK] {name}: {path}")
+    if path and os.path.exists(path):
+        print("[OK] %s: %s" % (name, path))
         return True
-    else:
-        print(f"[ERROR] {name}: {path} not found")
-        return False
+    print("[ERROR] %s: %s not found" % (name, path))
+    return False
+
 
 def main():
     print("=" * 60)
     print("Path Validation Test")
     print("=" * 60)
     print()
-    
+    print("Project directory: %s" % PROJECT_DIR)
+    print("Python executable: %s" % PYTHON_EXE)
+    print("Node executable:   %s" % NODE_EXE)
+    print()
+
     results = []
-    
-    # Test application paths
+
     print("Application Paths:")
     results.append(test_path(TRAE_EXE, "Trae SOLO CN"))
     results.append(test_path(WORKBUDDY_EXE, "WorkBuddy"))
-    
+
     print()
-    
-    # Test script paths
     print("Check-in Script Paths:")
     results.append(test_path(TRAE_CHECKIN_SCRIPT, "Trae Check-in Script"))
     results.append(test_path(WORKBUDDY_CHECKIN_SCRIPT, "WorkBuddy Check-in Script"))
-    
+
+    print()
+    print("Log Directory:")
+    print("[OK] Logs are written to: %s" % LOG_DIR)
+
     print()
     print("=" * 60)
-    
-    # Count results
+
     success_count = sum(results)
     total_count = len(results)
-    
+
     if success_count == total_count:
         print("All paths validated successfully!")
     else:
-        print(f"Path validation failed: {total_count - success_count} path(s) have issues")
-    
+        print("Path validation failed: %d path(s) have issues" % (total_count - success_count))
+
     print("=" * 60)
-    
+
     return 0 if success_count == total_count else 1
 
+
 if __name__ == "__main__":
-    exit(main())
+    sys.exit(main())

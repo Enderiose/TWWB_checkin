@@ -1,0 +1,10 @@
+# Batch files MUST keep CRLF line endings, otherwise cmd.exe mis-parses them
+# (observed: 'echo' split into fragments -> "'ho' is not recognized as an internal
+#  or external command").
+*.bat text eol=crlf
+
+# Patch files must keep LF, otherwise `git apply` may reject them.
+*.patch text eol=lf
+
+# Logs are machine-written, never convert them.
+*.log -text
