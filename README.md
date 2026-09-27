@@ -36,6 +36,20 @@ python scripts\test_paths.py
 install_startup_task.bat
 ```
 
+The installer asks what the task should check in (15s timeout, default = both):
+
+| Choice | Meaning |
+|--------|---------|
+| `[1]` | Trae only |
+| `[2]` | WorkBuddy only |
+| `[3]` | Both (default) |
+
+The choice can also be passed on the command line (unattended):
+```cmd
+install_startup_task.bat workbuddy quiet
+```
+Accepted values: `trae`, `workbuddy`, `all` (or `both`), `1`, `2`, `3`.
+
 #### 3. Test Check-in
 ```cmd
 python scripts\auto_checkin.py
@@ -93,9 +107,11 @@ WORKBUDDY_TIMEOUT = 60
 | Command | Description |
 |---------|-------------|
 | `python scripts\test_paths.py` | Test paths |
-| `python scripts\auto_checkin.py` | Manual check-in |
+| `python scripts\auto_checkin.py` | Manual check-in (both) |
+| `python scripts\auto_checkin.py --target trae` | Manual check-in, Trae only (`trae`/`workbuddy`/`all`) |
 | `python scripts\full_test.py` | System test |
-| `install_startup_task.bat` | Install task |
+| `install_startup_task.bat` | Install task (asks for the target) |
+| `install_startup_task.bat workbuddy` | Install task for WorkBuddy only (no prompt) |
 | `uninstall_startup_task.bat` | Uninstall task |
 
 ### Troubleshooting
@@ -109,6 +125,11 @@ WORKBUDDY_TIMEOUT = 60
    the script logs a warning when the screen differs
 6. **WorkBuddy "no change" / check-in not visible**: run `python scripts\diagnose_workbuddy.py`,
    look at the generated screenshots and correct `WORKBUDDY_CHECKIN_X/Y` in `config.py`
+7. **The installer seems to do nothing**: open `logs\install_task.log` - it records the
+   elevation state, the resolved Python/Node paths, and the exact `schtasks` command with
+   its output and exit code. A cancelled UAC prompt now reports an explicit error instead
+   of closing the window silently. The task itself only fires AT LOGON, so nothing happens
+   until the next logon or reboot.
 
 ### Technical Details
 
@@ -143,7 +164,7 @@ WORKBUDDY_TIMEOUT = 60
 
 ### Third-Party Code and Attribution
 
-This repository vendors two upstream projects. All credit for the check-in implementations belongs to their authors; only the wrapper/scheduling layer (`config.py`, `scripts/`, `*.bat`) is original to this project. `trae-daily-checkin/` is an unmodified copy; `workbuddy-checkin/` carries two small documented local patches (click coordinates and a flow switch, both driven by environment variables so they stay configurable from `config.py`).
+This repository vendors two upstream projects. All credit for the check-in implementations belongs to their authors; only the wrapper/scheduling layer (`config.py`, `scripts/`, `*.bat`) is original to this project. `trae-daily-checkin/` carries three small documented local fixes (waiting for the CDP page target, polling for the account UI, and making `--close` actually control whether Trae is closed); `workbuddy-checkin/` carries two small documented local patches (click coordinates and a flow switch, both driven by environment variables so they stay configurable from `config.py`).
 
 | Directory | Upstream repository | Author | License |
 | --- | --- | --- | --- |
@@ -185,6 +206,20 @@ python scripts\test_paths.py
 ```cmd
 install_startup_task.bat
 ```
+
+安装时会询问任务要签到哪些应用（15 秒无操作默认全签）：
+
+| 选项 | 含义 |
+|------|------|
+| `[1]` | 仅 Trae |
+| `[2]` | 仅 WorkBuddy |
+| `[3]` | 两者都签（默认） |
+
+也可以直接在命令行传入（用于无人值守）：
+```cmd
+install_startup_task.bat workbuddy quiet
+```
+可选值：`trae`、`workbuddy`、`all`（或 `both`）、`1`、`2`、`3`。
 
 #### 3. 测试签到
 ```cmd
@@ -242,9 +277,11 @@ WORKBUDDY_TIMEOUT = 60
 | 命令 | 说明 |
 |------|------|
 | `python scripts\test_paths.py` | 测试路径 |
-| `python scripts\auto_checkin.py` | 手动签到 |
+| `python scripts\auto_checkin.py` | 手动签到（全部） |
+| `python scripts\auto_checkin.py --target trae` | 手动签到，仅 Trae（`trae`/`workbuddy`/`all`） |
 | `python scripts\full_test.py` | 系统测试 |
-| `install_startup_task.bat` | 安装任务 |
+| `install_startup_task.bat` | 安装任务（会询问签到目标） |
+| `install_startup_task.bat workbuddy` | 仅安装 WorkBuddy 签到任务（不询问） |
 | `uninstall_startup_task.bat` | 卸载任务 |
 
 ### 故障排除
@@ -259,6 +296,9 @@ WORKBUDDY_TIMEOUT = 60
 6. **WorkBuddy 提示"界面无变化"或界面上看不到签到结果**：运行
    `python scripts\diagnose_workbuddy.py`，查看生成的截图并修正 `config.py` 的
    `WORKBUDDY_CHECKIN_X/Y`
+7. **安装脚本看起来没生效**：打开 `logs\install_task.log`，里面有提权状态、解析到的
+   Python/Node 路径、以及完整的 `schtasks` 命令与输出/退出码。UAC 被取消时现在会明确
+   报错，不再静默关窗。另外计划任务只在**登录时**触发，所以未重新登录/重启前不会执行。
 
 ### 技术细节
 
@@ -290,7 +330,7 @@ WORKBUDDY_TIMEOUT = 60
 
 ### 第三方代码引用声明
 
-本仓库收录以下两个开源项目。签到实现的所有功劳归上游作者所有；本项目原创部分仅为封装与调度层（`config.py`、`scripts/`、`*.bat`）。`trae-daily-checkin/` 为原样收录；`workbuddy-checkin/` 带有少量本地补丁（点击坐标与签到流程开关均支持环境变量覆盖，从而可由 `config.py` 统一配置），详见 THIRD_PARTY_NOTICES.md。
+本仓库收录以下两个开源项目。签到实现的所有功劳归上游作者所有；本项目原创部分仅为封装与调度层（`config.py`、`scripts/`、`*.bat`）。`trae-daily-checkin/` 带 3 处本地修复（等待 CDP page target、轮询账户 UI、让 `--close` 真正生效）；`workbuddy-checkin/` 带有少量本地补丁（点击坐标与签到流程开关均支持环境变量覆盖，从而可由 `config.py` 统一配置），详见 THIRD_PARTY_NOTICES.md。
 
 | 目录 | 上游仓库 | 作者 | 许可证 |
 | --- | --- | --- | --- |

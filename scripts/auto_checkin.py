@@ -517,19 +517,28 @@ def parse_args(argv=None):
                         help="started by the Windows scheduled task: wait for the desktop first")
     parser.add_argument("--no-desktop-wait", action="store_true",
                         help="skip the desktop readiness wait even in --startup mode")
+    parser.add_argument("--target", choices=["all", "trae", "workbuddy"], default="all",
+                        help="which check-in(s) to run: trae = Trae only, workbuddy = WorkBuddy "
+                             "only, all = both (default)")
     return parser.parse_args(argv)
 
 
-def run(startup_mode, skip_desktop_wait=False):
+def run(startup_mode, skip_desktop_wait=False, target="all"):
     log_environment(startup_mode)
     _prune_old_logs(LOG_KEEP_DAYS)
 
+    log("Check-in target    : %s" % target)
+
+    want_trae = target in ("all", "trae")
+    want_workbuddy = target in ("all", "workbuddy")
+
     paths = check_all_paths()
-    trae_ready = paths["trae_exe"] and paths["trae_script"]
-    workbuddy_ready = paths["workbuddy_exe"] and paths["workbuddy_script"]
+    trae_ready = want_trae and paths["trae_exe"] and paths["trae_script"]
+    workbuddy_ready = want_workbuddy and paths["workbuddy_exe"] and paths["workbuddy_script"]
 
     if not trae_ready and not workbuddy_ready:
-        log("No runnable check-in task (missing application or script), cannot proceed", "ERROR")
+        log("No runnable check-in task (target=%s; missing application or script), cannot proceed"
+            % target, "ERROR")
         return 1
 
     if startup_mode and not skip_desktop_wait:
@@ -545,18 +554,29 @@ def run(startup_mode, skip_desktop_wait=False):
         results["trae"] = run_trae_checkin()
         log("Waiting %ss before the next task" % WAIT_BETWEEN_TASKS)
         time.sleep(WAIT_BETWEEN_TASKS)
-    else:
+    elif want_trae:
         log("Trae SOLO CN unavailable, skipped", "WARN")
+    else:
+        log("Trae SOLO CN not selected (target=%s), skipped" % target)
 
     if workbuddy_ready:
         results["workbuddy"] = run_workbuddy_checkin()
-    else:
+    elif want_workbuddy:
         log("WorkBuddy unavailable, skipped", "WARN")
+    else:
+        log("WorkBuddy not selected (target=%s), skipped" % target)
+
+    def _status(key, ready, wanted):
+        if results[key]:
+            return "Success"
+        if not wanted:
+            return "Skipped (target=%s)" % target
+        return "Failed" if ready else "Skipped (unavailable)"
 
     log_separator()
     log("Check-in Results Summary:")
-    log("  Trae SOLO CN : %s" % ("Success" if results["trae"] else ("Failed" if trae_ready else "Skipped")))
-    log("  WorkBuddy    : %s" % ("Success" if results["workbuddy"] else ("Failed" if workbuddy_ready else "Skipped")))
+    log("  Trae SOLO CN : %s" % _status("trae", trae_ready, want_trae))
+    log("  WorkBuddy    : %s" % _status("workbuddy", workbuddy_ready, want_workbuddy))
     log_separator()
 
     success_count = sum(results.values())
@@ -582,7 +602,7 @@ def main(argv=None):
     _install_crash_handlers()
 
     try:
-        exit_code = run(args.startup, args.no_desktop_wait)
+        exit_code = run(args.startup, args.no_desktop_wait, args.target)
     except SystemExit:
         raise
     except BaseException as exc:                               # noqa: BLE001

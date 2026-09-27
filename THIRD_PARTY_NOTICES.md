@@ -1,10 +1,10 @@
 # 第三方代码引用声明 / Third-Party Notices
 
-本仓库（`TWWB_checkin`）以**未修改的上游副本**形式收录了以下第三方项目。
+本仓库（`TWWB_checkin`）以**上游副本**形式收录了以下第三方项目；本地改动均在下文逐条注明。
 本仓库仅提供封装与调度层（`config.py`、`scripts/`、`*.bat`、`README.md`）；
 所有签到实现的功能、算法与技术路线的著作权归上游作者所有。
 
-This repository vendors the following upstream projects as **unmodified copies**.
+This repository vendors the following upstream projects. Every local modification is listed explicitly below.
 Only the wrapper/scheduling layer (`config.py`, `scripts/`, `*.bat`, `README.md`)
 is original to this project. All copyright in the check-in implementations
 belongs to the respective upstream authors.
@@ -20,7 +20,8 @@ belongs to the respective upstream authors.
 | 作者 / Author | Cecilia（见 `trae-daily-checkin/package.json` 的 `author` 字段） |
 | 版本 / Version | 1.0.0（`package.json`） |
 | 许可证 / License | MIT |
-| 本地是否修改 / Local modifications | 无（原样收录） |
+| 本地是否修改 / Local modifications | **有本地修复 / Local fixes applied**（2026-09-27）：① `connectCDP()` 原先只查一次 `/json`，在“端口已监听、workbench 的 `page` target 尚未出现”时会直接报 `未找到 page 类型的 CDP target`（即 Trae 未运行时由脚本拉起的场景几乎必然失败）——改为新增 `waitForPageTarget()` 轮询等待（最长 30s）；② 打开账户菜单后立刻读取签到按钮，而弹层容器先出现、签到行后渲染，会被误判成“类名已变化”——改为依次轮询 `accountTrigger` / `accountPopover` / `accountCheckinButton`（各最长 15s）；③ `CLOSE_AFTER_CHECKIN`（`--close`）原先解析后从未被使用，导致不传 `--close` 也会关闭 Trae——改为仅在该开关打开时关闭。上游的启动、定位、CDP 连接与签到点击流程均保留。 |
+| 仓库跟踪方式 / How it is tracked | 2026-09-27 起作为父仓库的普通文件跟踪。此前索引中把它记为 submodule（gitlink），但磁盘上既无 `.git` 也无 `.gitmodules`，该目录实际上从未被跟踪，全新 clone 拿不到任何文件。 |
 
 ### 用途 / Purpose
 
