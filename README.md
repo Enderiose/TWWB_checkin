@@ -173,6 +173,12 @@ This repository vendors two upstream projects. All credit for the check-in imple
 
 See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for version/commit details and trademark notes.
 
+### License
+
+The original parts of this project — the wrapper and scheduling layer (`config.py`, `scripts/`, `*.bat`) — are released under the [MIT License](LICENSE).
+
+The vendored third-party code keeps the copyright and license of its respective authors (see the table above); the MIT License does not apply to it. In particular, `workbuddy-checkin/` ships without any upstream license file, so all rights to that code remain with its author.
+
 ---
 
 <a id="简体中文"></a>
